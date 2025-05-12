@@ -132,12 +132,27 @@ const MovieDetail = () => {
               <p className="text-gray-300 leading-relaxed">{movie.description}</p>
             </div>
             
-            <Button 
-              variant="destructive" 
-              className="px-8 py-6 text-lg font-medium"
-            >
-              Play Now
-            </Button>
+            {movie.videoUrl ? (
+              <div className="mb-8">
+                <h3 className="text-xl font-medium text-white mb-4">Watch Trailer</h3>
+                <div className="rounded-md overflow-hidden">
+                  <video 
+                    src={movie.videoUrl} 
+                    controls 
+                    className="w-full"
+                    poster={movie.imageUrl}
+                  />
+                </div>
+              </div>
+            ) : (
+              <Button 
+                variant="destructive" 
+                className="px-8 py-6 text-lg font-medium mb-8"
+                disabled
+              >
+                No Video Available
+              </Button>
+            )}
           </div>
         </div>
         

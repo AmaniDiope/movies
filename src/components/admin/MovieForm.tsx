@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMovies } from "@/context/MovieContext";
@@ -10,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { genres } from "@/types/movie";
 import { Badge } from "@/components/ui/badge";
+import { FileVideo } from "lucide-react";
+import { toast } from "sonner";
 
 interface MovieFormProps {
   movieId?: string;
@@ -24,6 +25,7 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
     title: "",
     description: "",
     imageUrl: "",
+    videoUrl: "",
     releaseYear: new Date().getFullYear(),
     genre: [],
     rating: 0,
@@ -32,6 +34,8 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
   });
   
   const [errors, setErrors] = useState<Partial<Record<keyof Movie, string>>>({});
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string>("");
   
   useEffect(() => {
     if (mode === "edit" && movieId) {
@@ -41,12 +45,17 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
           title: movie.title,
           description: movie.description,
           imageUrl: movie.imageUrl,
+          videoUrl: movie.videoUrl || "",
           releaseYear: movie.releaseYear,
           genre: movie.genre,
           rating: movie.rating,
           duration: movie.duration,
           featured: movie.featured || false,
         });
+        
+        if (movie.videoUrl) {
+          setVideoPreview(movie.videoUrl);
+        }
       }
     }
   }, [mode, movieId, getMovieById]);
@@ -90,6 +99,39 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
     }));
   };
   
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 100 * 1024 * 1024) { // 100MB limit
+        toast.error("Video file is too large. Maximum size is 100MB");
+        return;
+      }
+      
+      // Check if file is a video
+      if (!file.type.startsWith("video/")) {
+        toast.error("Please upload a valid video file");
+        return;
+      }
+      
+      setVideoFile(file);
+      
+      // Create a preview URL for the video
+      const videoUrl = URL.createObjectURL(file);
+      setVideoPreview(videoUrl);
+      
+      // In a real app, we'd upload to a storage service
+      // For now, just store the URL in formData
+      setFormData(prev => ({ ...prev, videoUrl: videoUrl }));
+      toast.success("Video added successfully");
+    }
+  };
+  
+  const removeVideo = () => {
+    setVideoFile(null);
+    setVideoPreview("");
+    setFormData(prev => ({ ...prev, videoUrl: "" }));
+  };
+  
   const validate = () => {
     const newErrors: Partial<Record<keyof Movie, string>> = {};
     
@@ -123,6 +165,9 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
     if (!validate()) {
       return;
     }
+    
+    // In a real app, we would upload the video to a storage service here
+    // and then get the URL to save in the database
     
     if (mode === "add") {
       addMovie(formData);
@@ -219,6 +264,53 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
               Featured Movie
             </Label>
           </div>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="videoUpload" className="text-gray-300">Movie Video</Label>
+        <div className="bg-netflix-lightgray rounded-md p-4">
+          {!videoPreview ? (
+            <div className="flex flex-col items-center space-y-3">
+              <FileVideo size={48} className="text-gray-400" />
+              <p className="text-gray-300">Upload movie video file</p>
+              <p className="text-gray-400 text-sm">Supports MP4, WebM (max 100MB)</p>
+              <div className="relative">
+                <Input
+                  id="videoUpload"
+                  type="file"
+                  accept="video/*"
+                  onChange={handleVideoChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  Select Video File
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <video 
+                src={videoPreview} 
+                controls 
+                className="w-full rounded-md max-h-64"
+              />
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={removeVideo}
+                >
+                  Remove Video
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
