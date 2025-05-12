@@ -4,7 +4,8 @@ export interface Movie {
   title: string;
   description: string;
   imageUrl: string;
-  videoUrl?: string; // New field for movie video URL
+  videoUrl?: string; // Field for movie video URL
+  youtubeTrailerId?: string; // New field for YouTube trailer ID
   releaseYear: number;
   genre: string[];
   rating: number;

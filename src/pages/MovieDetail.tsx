@@ -132,9 +132,29 @@ const MovieDetail = () => {
               <p className="text-gray-300 leading-relaxed">{movie.description}</p>
             </div>
             
+            {/* YouTube Trailer Section */}
+            {movie.youtubeTrailerId && (
+              <div className="mb-8">
+                <h3 className="text-xl font-medium text-white mb-4">Official Trailer</h3>
+                <div className="rounded-md overflow-hidden">
+                  <div className="aspect-w-16 aspect-h-9">
+                    <iframe 
+                      src={`https://www.youtube.com/embed/${movie.youtubeTrailerId}`}
+                      title="YouTube trailer"
+                      className="w-full h-64 rounded-md"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Full Movie Section */}
             {movie.videoUrl ? (
               <div className="mb-8">
-                <h3 className="text-xl font-medium text-white mb-4">Trailer</h3>
+                <h3 className="text-xl font-medium text-white mb-4">Movie Preview</h3>
                 <div className="rounded-md overflow-hidden">
                   <video 
                     src={movie.videoUrl} 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMovies } from "@/context/MovieContext";
@@ -9,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { genres } from "@/types/movie";
 import { Badge } from "@/components/ui/badge";
-import { FileVideo } from "lucide-react";
+import { FileVideo, Youtube } from "lucide-react";
 import { toast } from "sonner";
 
 interface MovieFormProps {
@@ -26,6 +27,7 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
     description: "",
     imageUrl: "",
     videoUrl: "",
+    youtubeTrailerId: "",
     releaseYear: new Date().getFullYear(),
     genre: [],
     rating: 0,
@@ -49,6 +51,7 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
           description: movie.description,
           imageUrl: movie.imageUrl,
           videoUrl: movie.videoUrl || "",
+          youtubeTrailerId: movie.youtubeTrailerId || "",
           releaseYear: movie.releaseYear,
           genre: movie.genre,
           rating: movie.rating,
@@ -135,6 +138,39 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
     setFormData(prev => ({ ...prev, videoUrl: "" }));
   };
   
+  const extractYouTubeID = (url: string): string | null => {
+    // Match YouTube URL patterns
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+  
+  const handleYouTubeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    
+    // If the field is cleared, just update the form
+    if (!value.trim()) {
+      setFormData(prev => ({ ...prev, youtubeTrailerId: "" }));
+      return;
+    }
+    
+    // Try to extract YouTube ID
+    const youtubeId = extractYouTubeID(value);
+    
+    if (youtubeId) {
+      setFormData(prev => ({ ...prev, youtubeTrailerId: youtubeId }));
+      setErrors(prev => ({ ...prev, youtubeTrailerId: undefined }));
+      toast.success("YouTube trailer added successfully");
+    } else {
+      setFormData(prev => ({ ...prev, youtubeTrailerId: value }));
+      setErrors(prev => ({ 
+        ...prev, 
+        youtubeTrailerId: "Invalid YouTube URL or ID. Please enter a valid YouTube URL or video ID" 
+      }));
+    }
+  };
+  
   const validate = () => {
     const newErrors: Partial<Record<keyof Movie, string>> = {};
     
@@ -156,6 +192,11 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
     
     if (!formData.duration.trim()) {
       newErrors.duration = "Duration is required";
+    }
+    
+    // Validate YouTube trailer ID if provided
+    if (formData.youtubeTrailerId && !extractYouTubeID(formData.youtubeTrailerId)) {
+      newErrors.youtubeTrailerId = "Invalid YouTube URL or ID";
     }
     
     setErrors(newErrors);
@@ -267,6 +308,46 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
               Featured Movie
             </Label>
           </div>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="youtubeTrailerId" className="text-gray-300">YouTube Trailer</Label>
+        <div className="space-y-4">
+          <div className="flex flex-col space-y-2">
+            <div className="relative">
+              <Youtube className="absolute left-3 top-3 text-gray-400" size={16} />
+              <Input
+                id="youtubeTrailerId"
+                name="youtubeTrailerId"
+                value={formData.youtubeTrailerId}
+                onChange={handleYouTubeChange}
+                placeholder="Enter YouTube URL or video ID"
+                className="bg-netflix-lightgray border-none text-white pl-10 focus-visible:ring-netflix-red"
+              />
+            </div>
+            {errors.youtubeTrailerId && (
+              <p className="text-red-500 text-sm">{errors.youtubeTrailerId}</p>
+            )}
+            <p className="text-gray-400 text-sm">
+              Example: https://www.youtube.com/watch?v=dQw4w9WgXcQ or dQw4w9WgXcQ
+            </p>
+          </div>
+          
+          {formData.youtubeTrailerId && !errors.youtubeTrailerId && (
+            <div className="rounded-md overflow-hidden">
+              <div className="aspect-w-16 aspect-h-9">
+                <iframe 
+                  src={`https://www.youtube.com/embed/${formData.youtubeTrailerId}`}
+                  title="YouTube trailer"
+                  className="w-full h-64 rounded-md"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
