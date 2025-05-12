@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMovies } from "@/context/MovieContext";
@@ -36,6 +37,9 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
   const [errors, setErrors] = useState<Partial<Record<keyof Movie, string>>>({});
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string>("");
+  
+  // Increased file size limit to 500MB
+  const MAX_FILE_SIZE = 500 * 1024 * 1024; 
   
   useEffect(() => {
     if (mode === "edit" && movieId) {
@@ -102,8 +106,8 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 100 * 1024 * 1024) { // 100MB limit
-        toast.error("Video file is too large. Maximum size is 100MB");
+      if (file.size > MAX_FILE_SIZE) { // Using the new size limit
+        toast.error(`Video file is too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
         return;
       }
       
@@ -274,7 +278,7 @@ const MovieForm: React.FC<MovieFormProps> = ({ movieId, mode }) => {
             <div className="flex flex-col items-center space-y-3">
               <FileVideo size={48} className="text-gray-400" />
               <p className="text-gray-300">Upload movie video file</p>
-              <p className="text-gray-400 text-sm">Supports MP4, WebM (max 100MB)</p>
+              <p className="text-gray-400 text-sm">Supports MP4, WebM (max 500MB)</p>
               <div className="relative">
                 <Input
                   id="videoUpload"

@@ -1,12 +1,12 @@
 
 import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useMovies } from "@/context/MovieContext";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, PlayCircle } from "lucide-react";
 import MovieCard from "@/components/MovieCard";
 
 const MovieDetail = () => {
@@ -134,7 +134,7 @@ const MovieDetail = () => {
             
             {movie.videoUrl ? (
               <div className="mb-8">
-                <h3 className="text-xl font-medium text-white mb-4">Watch Trailer</h3>
+                <h3 className="text-xl font-medium text-white mb-4">Trailer</h3>
                 <div className="rounded-md overflow-hidden">
                   <video 
                     src={movie.videoUrl} 
@@ -142,6 +142,17 @@ const MovieDetail = () => {
                     className="w-full"
                     poster={movie.imageUrl}
                   />
+                  <div className="mt-4">
+                    <Button 
+                      variant="destructive" 
+                      size="lg"
+                      className="px-8 py-6 text-lg font-medium flex items-center gap-2"
+                      onClick={() => navigate(`/watch/${movie.id}`)}
+                    >
+                      <PlayCircle size={24} />
+                      Watch Full Movie
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (

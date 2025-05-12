@@ -9,6 +9,7 @@ import { MovieProvider } from "@/context/MovieContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import MovieDetail from "./pages/MovieDetail";
+import WatchMovie from "./pages/WatchMovie";
 import Login from "./pages/Login";
 import Search from "./pages/Search";
 import Movies from "./pages/Movies";
@@ -30,6 +31,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/movie/:id" element={<MovieDetail />} />
+              <Route path="/watch/:id" element={<WatchMovie />} />
               <Route path="/movies" element={<Movies />} />
               <Route path="/genres" element={<Genres />} />
               <Route path="/genres/:genreName" element={<Genres />} />
