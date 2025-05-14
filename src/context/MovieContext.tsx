@@ -2,44 +2,11 @@
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import { Movie } from "@/types/movie";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
+import { useAuth } from "./AuthContext"; // Import AuthContext for JWT
+
 
 // Sample movie data
-const initialMovies: Movie[] = [
-  {
-    id: "1",
-    title: "Inception",
-    description: "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
-    imageUrl: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&auto=format&fit=crop",
-    releaseYear: 2010,
-    genre: ["Science Fiction", "Action", "Thriller"],
-    rating: 8.8,
-    duration: "2h 28m",
-    featured: true,
-  },
-  {
-    id: "2",
-    title: "The Matrix",
-    description: "A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers.",
-    imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop",
-    releaseYear: 1999,
-    genre: ["Science Fiction", "Action"],
-    rating: 8.7,
-    duration: "2h 16m",
-    featured: true,
-  },
-  {
-    id: "3",
-    title: "Interstellar",
-    description: "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
-    imageUrl: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=800&auto=format&fit=crop",
-    releaseYear: 2014,
-    genre: ["Science Fiction", "Drama", "Adventure"],
-    rating: 8.6,
-    duration: "2h 49m",
-    featured: false,
-  },
-];
+// No initialMovies: movies are fetched from the backend
 
 interface MovieContextType {
   movies: Movie[];
@@ -67,40 +34,82 @@ interface MovieProviderProps {
 }
 
 export const MovieProvider = ({ children }: MovieProviderProps) => {
-  const [movies, setMovies] = useState<Movie[]>(() => {
-    const savedMovies = localStorage.getItem("movies");
-    return savedMovies ? JSON.parse(savedMovies) : initialMovies;
-  });
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const { user } = useAuth();
 
-  // Save movies to localStorage whenever the state changes
+  // Fetch movies from backend on mount
   React.useEffect(() => {
-    localStorage.setItem("movies", JSON.stringify(movies));
-  }, [movies]);
+    const fetchMovies = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/movies');
+        const data = await res.json();
+        setMovies(data);
+      } catch (error) {
+        toast.error('Failed to fetch movies from backend');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMovies();
+  }, []);
 
   const featuredMovies = movies.filter((movie) => movie.featured);
 
-  const addMovie = (movie: Omit<Movie, "id">) => {
-    const newMovie = {
-      ...movie,
-      id: uuidv4(),
-    };
-    setMovies([...movies, newMovie]);
-    toast.success("Movie added successfully");
+  const addMovie = async (movie: Omit<Movie, "id">) => {
+    try {
+      const res = await fetch('http://localhost:5000/api/movies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {}),
+        },
+        body: JSON.stringify(movie),
+      });
+      if (!res.ok) throw new Error('Failed to add movie');
+      const newMovie = await res.json();
+      setMovies((prev) => [...prev, newMovie]);
+      toast.success('Movie added successfully');
+    } catch (error) {
+      toast.error('Failed to add movie');
+    }
   };
 
-  const updateMovie = (id: string, updatedMovie: Partial<Movie>) => {
-    setMovies((prevMovies) =>
-      prevMovies.map((movie) =>
-        movie.id === id ? { ...movie, ...updatedMovie } : movie
-      )
-    );
-    toast.success("Movie updated successfully");
+  const updateMovie = async (id: string, updatedMovie: Partial<Movie>) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/movies/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {}),
+        },
+        body: JSON.stringify(updatedMovie),
+      });
+      if (!res.ok) throw new Error('Failed to update movie');
+      const updated = await res.json();
+      setMovies((prev) => prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m)));
+      toast.success('Movie updated successfully');
+    } catch (error) {
+      toast.error('Failed to update movie');
+    }
   };
 
-  const deleteMovie = (id: string) => {
-    setMovies((prevMovies) => prevMovies.filter((movie) => movie.id !== id));
-    toast.success("Movie deleted successfully");
+  const deleteMovie = async (id: string) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/movies/${id}`, {
+        method: 'DELETE',
+        headers: {
+          ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {}),
+        },
+      });
+      if (!res.ok) throw new Error('Failed to delete movie');
+      setMovies((prev) => prev.filter((movie) => movie.id !== id));
+      toast.success('Movie deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete movie');
+    }
   };
+
 
   const getMovieById = (id: string) => {
     return movies.find((movie) => movie.id === id);

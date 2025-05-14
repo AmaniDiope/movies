@@ -4,12 +4,14 @@ import { toast } from "sonner";
 
 interface User {
   username: string;
-  role: "admin" | "user";
+  token: string;
+  isAdmin: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => boolean;
+  login: (username: string, password: string) => Promise<boolean>;
+  register: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -25,11 +27,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Mock admin credentials (in a real app this would be handled by a backend)
-const ADMIN_CREDENTIALS = {
-  username: "admin",
-  password: "admin123",
-};
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -42,25 +39,56 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   });
 
   const isAuthenticated = !!user;
-  const isAdmin = user?.role === "admin";
+  const isAdmin = !!user?.isAdmin;
 
-  const login = (username: string, password: string) => {
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      const user = { username, role: "admin" as const };
-      setUser(user);
-      localStorage.setItem("user", JSON.stringify(user));
-      toast.success("Login successful");
+  const login = async (username: string, password: string) => {
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error || 'Login failed');
+        return false;
+      }
+      const data = await res.json();
+      const userObj = { username, token: data.token, isAdmin: data.isAdmin };
+      setUser(userObj);
+      localStorage.setItem('user', JSON.stringify(userObj));
+      toast.success('Login successful');
       return true;
+    } catch (e) {
+      toast.error('Login failed');
+      return false;
     }
-    
-    toast.error("Invalid credentials");
-    return false;
+  };
+
+  const register = async (username: string, password: string) => {
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error || 'Registration failed');
+        return false;
+      }
+      toast.success('Registration successful! Please log in.');
+      return true;
+    } catch (e) {
+      toast.error('Registration failed');
+      return false;
+    }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("user");
-    toast.success("Logged out successfully");
+    localStorage.removeItem('user');
+    toast.success('Logged out successfully');
   };
 
   return (
@@ -68,6 +96,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       value={{
         user,
         login,
+        register,
         logout,
         isAuthenticated,
         isAdmin,

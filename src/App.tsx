@@ -11,12 +11,14 @@ import NotFound from "./pages/NotFound";
 import MovieDetail from "./pages/MovieDetail";
 import WatchMovie from "./pages/WatchMovie";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Search from "./pages/Search";
 import Movies from "./pages/Movies";
 import Genres from "./pages/Genres";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AddMovie from "./pages/admin/AddMovie";
 import EditMovie from "./pages/admin/EditMovie";
+import PrivateAdminRoute from "@/components/PrivateAdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -37,9 +39,22 @@ const App = () => (
               <Route path="/genres/:genreName" element={<Genres />} />
               <Route path="/search" element={<Search />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/add" element={<AddMovie />} />
-              <Route path="/admin/edit/:id" element={<EditMovie />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/admin" element={
+                <PrivateAdminRoute>
+                  <AdminDashboard />
+                </PrivateAdminRoute>
+              } />
+              <Route path="/admin/add" element={
+                <PrivateAdminRoute>
+                  <AddMovie />
+                </PrivateAdminRoute>
+              } />
+              <Route path="/admin/edit/:id" element={
+                <PrivateAdminRoute>
+                  <EditMovie />
+                </PrivateAdminRoute>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </MovieProvider>

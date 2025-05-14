@@ -10,6 +10,10 @@ interface MovieCardProps {
 }
 
 const MovieCard: React.FC<MovieCardProps> = ({ movie, className = "" }) => {
+  if (!movie.id) {
+    // Optionally, render nothing or a disabled card
+    return null;
+  }
   return (
     <Link to={`/movie/${movie.id}`} className="group">
       <Card className={`movie-card bg-netflix-darkgray border-none ${className}`}>
